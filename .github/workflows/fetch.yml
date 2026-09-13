@@ -17,53 +17,83 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install cloudscraper
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          playwright install chromium
+          playwright install-deps chromium
 
       - name: Fetch data
         run: |
           python - <<'EOF'
-          import cloudscraper, json
+          import json, os
           from datetime import datetime, timezone
+          from playwright.sync_api import sync_playwright
 
-          s = cloudscraper.create_scraper(
-              browser={'browser': 'chrome', 'platform': 'windows', 'desktop': True}
-          )
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True, args=[
+                  "--no-sandbox", "--disable-blink-features=AutomationControlled"
+              ])
+              ctx = browser.new_context(
+                  user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                  locale="en-US",
+                  viewport={"width": 1366, "height": 768}
+              )
+              page = ctx.new_page()
 
-          headers = {
-              "Accept": "application/json, text/plain, */*",
-              "Accept-Language": "en-US,en;q=0.9",
-              "Referer": "https://draw.ar-lottery01.com/",
-              "Origin": "https://draw.ar-lottery01.com",
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          }
+              print("Visiting homepage...")
+              page.goto("https://draw.ar-lottery01.com/", wait_until="domcontentloaded", timeout=60000)
+              page.wait_for_timeout(5000)
+              print(f"Homepage loaded: {page.url}")
 
-          print("Visiting homepage for cookies...")
-          home = s.get("https://draw.ar-lottery01.com/", headers=headers, timeout=30)
-          print(f"Home status: {home.status_code}")
-
-          print("Fetching API...")
-          r = s.get(
-              "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json",
-              headers=headers, timeout=30
-          )
-          print(f"API status: {r.status_code}")
-
-          if r.status_code == 200:
-              try:
-                  data = r.json()
-                  data["_fetched_at"] = datetime.now(timezone.utc).isoformat()
-                  with open("wingo.json", "w") as f:
-                      json.dump(data, f, indent=2)
-                  print("Data saved to wingo.json")
-              except Exception as e:
-                  print(f"JSON parse error: {e}")
-                  print(r.text[:500])
+              print("Fetching API...")
+              resp = page.request.get(
+                  "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json",
+                  headers={
+                      "Accept": "application/json, text/plain, */*",
+                      "Referer": "https://draw.ar-lottery01.com/",
+                      "Origin": "https://draw.ar-lottery01.com",
+                  }
+              )
+              print(f"API status: {resp.status}")
+              if resp.status != 200:
+                  print(f"Body: {resp.text()[:500]}")
+                  browser.close()
                   raise SystemExit(1)
-          else:
-              print(f"Failed with status {r.status_code}")
-              print(r.text[:500])
-              raise SystemExit(1)
+
+              new_data = resp.json()
+              browser.close()
+
+          new_list = new_data.get("data", {}).get("list", [])
+          print(f"New items: {len(new_list)}")
+
+          existing_list = []
+          if os.path.exists("wingo.json"):
+              try:
+                  with open("wingo.json") as f:
+                      existing_list = json.load(f).get("data", {}).get("list", [])
+              except Exception:
+                  pass
+
+          merged = {}
+          for item in existing_list + new_list:
+              issue = item.get("issueNumber")
+              if issue:
+                  merged[issue] = item
+
+          final_list = sorted(
+              merged.values(),
+              key=lambda x: x.get("issueNumber", ""),
+              reverse=True
+          )[:1440]
+
+          with open("wingo.json", "w") as f:
+              json.dump({
+                  "data": {"list": final_list},
+                  "_fetched_at": datetime.now(timezone.utc).isoformat()
+              }, f, indent=2)
+
+          print(f"Saved {len(final_list)} items")
           EOF
 
       - name: Commit and push
@@ -72,7 +102,7 @@ jobs:
           git config user.email "bot@users.noreply.github.com"
           git add wingo.json
           if git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "No changes"
           else
             git commit -m "Update wingo data [skip ci]"
             git push
