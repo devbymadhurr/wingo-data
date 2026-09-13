@@ -1,0 +1,79 @@
+name: Fetch WinGo Data
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install cloudscraper
+
+      - name: Fetch data
+        run: |
+          python - <<'EOF'
+          import cloudscraper, json
+          from datetime import datetime, timezone
+
+          s = cloudscraper.create_scraper(
+              browser={'browser': 'chrome', 'platform': 'windows', 'desktop': True}
+          )
+
+          headers = {
+              "Accept": "application/json, text/plain, */*",
+              "Accept-Language": "en-US,en;q=0.9",
+              "Referer": "https://draw.ar-lottery01.com/",
+              "Origin": "https://draw.ar-lottery01.com",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          }
+
+          print("Visiting homepage for cookies...")
+          home = s.get("https://draw.ar-lottery01.com/", headers=headers, timeout=30)
+          print(f"Home status: {home.status_code}")
+
+          print("Fetching API...")
+          r = s.get(
+              "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json",
+              headers=headers, timeout=30
+          )
+          print(f"API status: {r.status_code}")
+
+          if r.status_code == 200:
+              try:
+                  data = r.json()
+                  data["_fetched_at"] = datetime.now(timezone.utc).isoformat()
+                  with open("wingo.json", "w") as f:
+                      json.dump(data, f, indent=2)
+                  print("Data saved to wingo.json")
+              except Exception as e:
+                  print(f"JSON parse error: {e}")
+                  print(r.text[:500])
+                  raise SystemExit(1)
+          else:
+              print(f"Failed with status {r.status_code}")
+              print(r.text[:500])
+              raise SystemExit(1)
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "wingo-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add wingo.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update wingo data [skip ci]"
+            git push
+          fi
