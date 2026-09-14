@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html>
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WinGo Infinity Collector - 1440 Results</title>
+<style>
+  :root{ --bg:#0f172a; --card:rgba(255,255,255,0.06); --border:rgba(255,255,255,0.12); --muted:#94a3b8; --accent1:#a855f7; --accent2:#ec4899; }
+  *{box-sizing:border-box}
+  body{font-family:ui-sans-system,system-ui,Segoe UI,Roboto,sans-serif;background:radial-gradient(1200px 600px at 50% -20%, #1e1b4b 0%, #0f172a 60%);color:#fff;margin:0;padding:18px;min-height:100vh}
+  h1{text-align:center;margin:8px 0 2px;font-size:28px;background:linear-gradient(90deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:14px}
+  .wrap{max-width:900px;margin:0 auto}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:14px;backdrop-filter:blur(10px)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+  .stat{background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:22px;margin-top:2px}
+  .stat span{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0}
+  button{border:0;border-radius:10px;padding:10px 14px;font-weight:600;font-size:13px;cursor:pointer;transition:.15s;white-space:nowrap}
+  button:hover{transform:translateY(-1px)}
+  .primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff}
+  .secondary{background:#1e293b;color:#e2e8f0;border:1px solid var(--border)}
+  .success{background:#16a34a;color:#fff}
+  .danger{background:#1e293b;color:#f87171;border:1px solid rgba(248,113,113,.3)}
+  .log{background:#020617;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:ui-monospace,monospace;font-size:11px;color:#94e2d5;max-height:140px;overflow:auto;line-height:1.5}
+  table{width:100%;border-collapse:collapse;background:rgba(0,0,0,0.2);border-radius:12px;overflow:hidden}
+  th,td{padding:9px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.07);font-size:13px}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0;background:#131c31}
+  .num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#1e293b;font-weight:800;border:1px solid var(--border)}
+  .dot{display:inline-block;width:14px;height:14px;border-radius:50%;box-shadow:0 0 8px currentColor}
+  .green{background:#22c55e;color:#22c55e}.red{background:#ef4444;color:#ef4444}.violet{background:#a855f7;color:#a855f7}
+  .issue{font-family:ui-monospace,monospace;font-size:11.5px;color:#cbd5e1}
+  .badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:999px;background:rgba(168,85,247,.2);border:1px solid rgba(168,85,247,.3);color:#d8b4fe;margin-left:6px}
+  input[type=file]{display:none}
+  .row2{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  .small{font-size:11px;color:var(--muted)}
+  #status{padding:10px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WinGo 1M Infinity Collector</h1>
+  <div class="sub">No 40-result block • LocalStorage infinity • Manual PUSH to wingo.json • Target 1440 records</div>
+
+  <div class="panel">
+    <div class="grid">
+      <div class="stat"><span>Total Stored</span><b id="totalCount">0</b></div>
+      <div class="stat"><span>Showing</span><b id="showCount">0</b></div>
+      <div class="stat"><span>Today Count</span><b id="todayCount">0</b></div>
+      <div class="stat"><span>Last Fetch</span><b id="lastTime" style="font-size:12px">never</b></div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="btnFetch">⚡ FETCH NOW</button>
+      <button class="secondary" id="btnCollect1440">📦 COLLECT 1440</button>
+      <button class="success" id="btnPush">⬇️ MANUAL PUSH to wingo.json</button>
+      <button class="secondary" id="btnAuto">▶️ AUTO: OFF</button>
+    </div>
+    <div class="controls">
+      <button class="secondary" id="btnImport">📂 IMPORT wingo.json</button>
+      <button class="secondary" id="btnLoadFile">📂 LOAD LOCAL wingo.json</button>
+      <button class="secondary" id="btnCopy">📋 COPY JSON</button>
+      <button class="danger" id="btnClear">🗑️ CLEAR STORAGE</button>
+      <input type="file" id="fileInput" accept=".json">
+    </div>
+
+    <div class="row2" style="margin-top:10px">
+      <div class="small">API: <code>draw.ar-lottery01.com/WinGo_1M/GetHistoryIssuePage.json</code> <span id="corsStatus" class="badge">checking CORS</span></div>
+      <label class="small"><input type="checkbox" id="useProxy"> Use CORS proxy if blocked</label>
+    </div>
+    <div class="log" id="log">Ready. Click FETCH NOW to start collecting...</div>
+  </div>
+
+  <div class="panel">
+    <div class="row2"><div class="small">LIVE RESULTS (from LocalStorage, deduped, sorted new → old, max 1440 display)</div><div class="small"><input id="search" placeholder="search issue/number" style="background:#0b1220;border:1px solid var(--border);color:#fff;padding:6px 10px;border-radius:8px;font-size:12px"></div></div>
+    <div id="status">⏳ Waiting for data...</div>
+    <div style="max-height:620px;overflow:auto;margin-top:10px;border-radius:12px;border:1px solid var(--border)">
+      <table id="table" style="display:none">
+        <thead><tr><th>#</th><th>Issue Number</th><th>Number</th><th>Color</th><th>Time</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel small">
+    How MANUAL PUSH works: All data is stored in <code>localStorage[wingo_infinity_db]</code> forever. Clicking <b>MANUAL PUSH to wingo.json</b> merges everything, dedupes, sorts, and downloads a file named <code>wingo.json</code> in exact format your viewer expects: <code>{ data:{list:[]}, _fetched_at }</code>. Just replace your server's wingo.json with this file. No 40-limit. Achieves 1440 easily.
+  </div>
+</div>
+
+<script>
+const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json";
+const STORAGE_KEY = "wingo_infinity_db";
+const EXPORT_KEY = "wingo_json_export";
+let autoTimer = null;
+let isCollecting = false;
+
+function log(msg){
+  const el = document.getElementById('log');
+  const time = new Date().toLocaleTimeString();
+  el.innerHTML = `[${time}] ${msg}<br>` + el.innerHTML;
+}
+
+function getColorClass(n){
+  n = parseInt(n);
+  if(isNaN(n)) return "violet";
+  if(n===0 || n===5) return "violet";
+  if([1,3,7,9].includes(n)) return "green";
+  return "red";
+}
+
+function getAll(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ return []; }
+}
+
+function saveAll(list){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    return true;
+  }catch(e){
+    // If quota exceeded, keep most recent 3000
+    log("⚠️ Storage full, trimming to 3000");
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0,3000)));
+      return true;
+    }catch(e2){
+      log("❌ Failed to save: "+e2.message);
+      return false;
+    }
+  }
+}
+
+function mergeIntoStorage(newItems){
+  if(!newItems || newItems.length===0) return 0;
+  const map = new Map();
+  const existing = getAll();
+  existing.forEach(it=>{
+    const id = String(it.issueNumber || it.period || it.periodId || "");
+    if(id) map.set(id, it);
+  });
+  let added=0;
+  newItems.forEach(item=>{
+    const id = String(item.issueNumber || item.period || item.periodId || item.period || item.issue || "");
+    if(!id) return;
+    // normalize
+    const norm = {
+      issueNumber: item.issueNumber || item.period || item.issue || id,
+      number: (item.number ?? item.result ?? item.openNumber ?? item.num ?? "-"),
+      colour: item.colour ?? item.color ?? "",
+      time: item.time || item.openTime || item.createTime || "",
+      _raw: item
+    };
+    // keep original fields too
+    Object.assign(norm, item);
+    if(!map.has(id)) added++;
+    map.set(id, {...map.get(id), ...norm});
+  });
+  const merged = Array.from(map.values()).sort((a,b)=> String(b.issueNumber||"").localeCompare(String(a.issueNumber||"")));
+  saveAll(merged);
+  return added;
+}
+
+async function tryFetch(pageNo, pageSize, useProxy=false){
+  const payload = {
+    pageSize: pageSize,
+    pageNo: pageNo,
+    typeId: 1,
+    language: 0,
+    random: Math.random().toString(36).slice(2,10) + Date.now().toString().slice(-5),
+    // some implementations require these
+    pageNoStr: String(pageNo)
+  };
+
+  let urls = [API_URL];
+  if(useProxy){
+    urls = [
+      "https://corsproxy.io/?" + encodeURIComponent(API_URL),
+      "https://api.allorigins.win/raw?url=" + encodeURIComponent(API_URL)
+    ];
+  }
+
+  for(const url of urls){
+    try{
+      // Try POST first
+      const res = await fetch(url, {
+        method: "POST",
+        headers:{
+          "Content-Type":"application/json;charset=UTF-8",
+          "Accept":"application/json, text/plain, */*",
+          "Origin":"https://www.example.com"
+        },
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error("POST status "+res.status);
+      const json = await res.json();
+      if(json && (json.data || json.list || json.result)) return json;
+      // if empty but 200, still return
+      return json;
+    }catch(e){
+      // Try GET fallback
+      try{
+        const qs = `?pageSize=${pageSize}&pageNo=${pageNo}&typeId=1&language=0&t=${Date.now()}`;
+        const gUrl = url + qs;
+        const res2 = await fetch(gUrl, { method:"GET", headers:{ "Accept":"application/json" } });
+        if(!res2.ok) continue;
+        const json2 = await res2.json();
+        if(json2) return json2;
+      }catch(e2){ continue; }
+    }
+  }
+  throw new Error("All fetch attempts failed (CORS blocked?) - enable proxy checkbox");
+}
+
+function extractList(json){
+  if(!json) return [];
+  if(json.data && json.data.list) return json.data.list;
+  if(json.data && Array.isArray(json.data)) return json.data;
+  if(Array.isArray(json.list)) return json.list;
+  if(json.result && json.result.list) return json.result.list;
+  if(json.data && json.data.data && json.data.data.list) return json.data.data.list;
+  // try to find first array in object
+  for(const k in json){
+    if(Array.isArray(json[k]) && json[k].length>0 && typeof json[k][0]==='object') return json[k];
+    if(json[k] && typeof json[k]==='object'){
+      if(Array.isArray(json[k].list)) return json[k].list;
+    }
+  }
+  return [];
+}
+
+async function fetchLatest(){
+  const useProxy = document.getElementById('useProxy').checked;
+  log(`Fetching page 1...`);
+  const json = await tryFetch(1, 100, useProxy);
+  const list = extractList(json);
+  log(`Got ${list.length} records from API`);
+  const added = mergeIntoStorage(list);
+  log(`Merged: +${added} new, total ${getAll().length}`);
+  document.getElementById('corsStatus').innerText = "CORS OK";
+  document.getElementById('corsStatus').style.background = "rgba(34,197,94,.2)";
+  updateUI();
+  document.getElementById('lastTime').innerText = new Date().toLocaleTimeString();
+  return list;
+}
+
+async function collect1440(){
+  if(isCollecting) return;
+  isCollecting = true;
+  const btn = document.getElementById('btnCollect1440');
+  btn.innerText = "⏳ COLLECTING...";
+  const useProxy = document.getElementById('useProxy').checked;
+  let pageNo=1;
+  const pageSize=100; // most APIs allow 100
+  let totalFetched=0;
+  try{
+    while(totalFetched < 1440 && pageNo <= 20){
+      log(`Collecting page ${pageNo} (target 1440, have ${getAll().length})`);
+      btn.innerText = `⏳ PAGE ${pageNo} (${getAll().length}/1440)`;
+      const json = await tryFetch(pageNo, pageSize, useProxy);
+      const list = extractList(json);
+      if(list.length===0){
+        log(`Page ${pageNo} empty, stopping`);
+        break;
+      }
+      const added = mergeIntoStorage(list);
+      totalFetched += list.length;
+      updateUI();
+      log(`Page ${pageNo}: ${list.length} items, +${added} new, total stored ${getAll().length}`);
+      if(list.length < pageSize) break;
+      pageNo++;
+      await new Promise(r=>setTimeout(r, 600)); // avoid rate limit
+    }
+    log(`✅ COLLECTION DONE: ${getAll().length} total stored (need 1440 for full day)`);
+  }catch(e){
+    log("❌ Collect error: "+e.message);
+  }finally{
+    isCollecting=false;
+    btn.innerText = "📦 COLLECT 1440";
+  }
+}
+
+function updateUI(){
+  const all = getAll();
+  const filter = document.getElementById('search').value.trim().toLowerCase();
+  let filtered = all;
+  if(filter){
+    filtered = all.filter(it=>{
+      const s = (it.issueNumber+" "+it.number).toLowerCase();
+      return s.includes(filter);
+    });
+  }
+  const display = filtered.slice(0, 1440); // show max 1440, no 40 block
+  document.getElementById('totalCount').innerText = all.length;
+  document.getElementById('showCount').innerText = display.length;
+  // today count
+  const todayStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+  // issueNumber format is like 20250914... so check prefix
+  const todayCount = all.filter(it=> String(it.issueNumber).startsWith(todayStr) || String(it.issueNumber).includes(todayStr.slice(0,8))).length;
+  document.getElementById('todayCount').innerText = todayCount;
+
+  const tbody = document.getElementById('tbody');
+  if(display.length===0){
+    document.getElementById('status').style.display='block';
+    document.getElementById('status').innerText = all.length===0 ? "No data yet. Click FETCH NOW or IMPORT." : "No match for search.";
+    document.getElementById('table').style.display='none';
+    return;
+  }
+  document.getElementById('status').style.display='none';
+  document.getElementById('table').style.display='table';
+  tbody.innerHTML = display.map((item, idx)=>{
+    const num = item.number ?? item.result ?? "-";
+    const issue = item.issueNumber || item.period || "-";
+    const t = item.time || item.openTime || "";
+    return `<tr>
+      <td class="small">${idx+1}</td>
+      <td class="issue">${issue}</td>
+      <td><span class="num">${num}</span></td>
+      <td><span class="dot ${getColorClass(num)}"></span></td>
+      <td class="small">${t ? new Date(t).toLocaleTimeString?.() || t : "-"}</td>
+    </tr>`;
+  }).join("");
+}
+
+function pushToWingoJson(){
+  const all = getAll();
+  if(all.length===0){ alert("No data in storage! Fetch first."); return; }
+  const sorted = [...all].sort((a,b)=> String(b.issueNumber||"").localeCompare(String(a.issueNumber||""))).slice(0,1440);
+  // Build format compatible with your viewer + original API format
+  const exportObj = {
+    data: { list: sorted.map(it=>({
+      issueNumber: it.issueNumber,
+      number: it.number,
+      colour: it.colour || (getColorClass(it.number)==='green'?'green':getColorClass(it.number)==='red'?'red':'violet'),
+      // keep extra
+      ...it._raw
+    })) },
+    _fetched_at: new Date().toISOString(),
+    _total: all.length,
+    _exported: sorted.length,
+    _source: "infinity-collector"
+  };
+  // Also save backup key
+  localStorage.setItem(EXPORT_KEY, JSON.stringify(exportObj));
+  const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "wingo.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  log(`⬇️ MANUAL PUSH: exported ${sorted.length} records to wingo.json download (total DB ${all.length})`);
+}
+
+async function loadLocalWingoJson(){
+  try{
+    const res = await fetch("./wingo.json?t="+Date.now());
+    if(!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    const list = extractList(json);
+    const added = mergeIntoStorage(list);
+    log(`Loaded local ./wingo.json: ${list.length} items, +${added} new, total ${getAll().length}`);
+    updateUI();
+  }catch(e){
+    log("❌ Could not load ./wingo.json (must be same folder & served via http): "+e.message);
+  }
+}
+
+// Events
+document.getElementById('btnFetch').onclick = async()=>{
+  try{ await fetchLatest(); }catch(e){ log("❌ Fetch error: "+e.message); document.getElementById('corsStatus').innerText="CORS BLOCKED - enable proxy"; }
+};
+document.getElementById('btnCollect1440').onclick = collect1440;
+document.getElementById('btnPush').onclick = pushToWingoJson;
+document.getElementById('btnLoadFile').onclick = loadLocalWingoJson;
+
+document.getElementById('btnAuto').onclick = ()=>{
+  const btn = document.getElementById('btnAuto');
+  if(autoTimer){
+    clearInterval(autoTimer); autoTimer=null;
+    btn.innerText="▶️ AUTO: OFF";
+    log("Auto collector stopped");
+  }else{
+    autoTimer = setInterval(async()=>{
+      try{ await fetchLatest(); }catch(e){ log("Auto fetch failed: "+e.message); }
+    }, 30000);
+    btn.innerText="⏸️ AUTO: ON (30s)";
+    log("Auto collector started (30s interval)");
+    fetchLatest();
+  }
+};
+
+document.getElementById('btnClear').onclick = ()=>{
+  if(confirm(`Clear all ${getAll().length} records from localStorage?`)){
+    localStorage.removeItem(STORAGE_KEY);
+    log("Storage cleared");
+    updateUI();
+  }
+};
+
+document.getElementById('btnCopy').onclick = async()=>{
+  const all = getAll();
+  if(all.length===0) return alert("No data");
+  const exportObj = { data:{list: all.slice(0,1440)}, _fetched_at:new Date().toISOString() };
+  await navigator.clipboard.writeText(JSON.stringify(exportObj));
+  log("Copied JSON to clipboard");
+};
+
+document.getElementById('btnImport').onclick = ()=> document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange = async(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const json = JSON.parse(text);
+    const list = extractList(json);
+    const added = mergeIntoStorage(list);
+    log(`Imported ${file.name}: ${list.length} items, +${added} new, total ${getAll().length}`);
+    updateUI();
+  }catch(err){ log("Import error: "+err.message); }
+};
+
+document.getElementById('search').oninput = updateUI;
+
+// Init
+updateUI();
+(async()=>{
+  try{
+    await fetch("./wingo.json?t="+Date.now()).then(r=>r.json()).then(j=>{
+      const list = extractList(j);
+      if(list.length>0){
+        log(`Found existing ./wingo.json with ${list.length} records, auto-merged to storage for continuity`);
+        mergeIntoStorage(list);
+        updateUI();
+      }
+    }).catch(()=>{});
+  }catch{}
+})();
+
+// Try quick CORS check
+fetchLatest().catch(e=>{
+  log("Initial fetch blocked: "+e.message+" → tick 'Use CORS proxy' and retry");
+  document.getElementById('corsStatus').innerText="CORS BLOCKED";
+});
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
