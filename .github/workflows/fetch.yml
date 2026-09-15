@@ -1,109 +1,24 @@
-name: Fetch WinGo Data
+name: WinGo Collector Cron
 
 on:
   schedule:
+    # GitHub Actions' minimum reliable interval is ~5 minutes.
+    # Cron syntax: minute hour day month weekday
     - cron: '*/5 * * * *'
-  workflow_dispatch:
+  workflow_dispatch: {}   # lets you also trigger it manually from the Actions tab
 
 jobs:
-  fetch:
+  ping-collector:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Playwright
+      - name: Call the collector cron endpoint
         run: |
-          pip install playwright
-          playwright install chromium
-          playwright install-deps chromium
-
-      - name: Fetch data
-        run: |
-          python - <<'EOF'
-          import json, os
-          from datetime import datetime, timezone
-          from playwright.sync_api import sync_playwright
-
-          with sync_playwright() as p:
-              browser = p.chromium.launch(headless=True, args=[
-                  "--no-sandbox", "--disable-blink-features=AutomationControlled"
-              ])
-              ctx = browser.new_context(
-                  user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                  locale="en-US",
-                  viewport={"width": 1366, "height": 768}
-              )
-              page = ctx.new_page()
-
-              print("Visiting homepage...")
-              page.goto("https://draw.ar-lottery01.com/", wait_until="domcontentloaded", timeout=60000)
-              page.wait_for_timeout(5000)
-              print(f"Homepage loaded: {page.url}")
-
-              print("Fetching API...")
-              resp = page.request.get(
-                  "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json",
-                  headers={
-                      "Accept": "application/json, text/plain, */*",
-                      "Referer": "https://draw.ar-lottery01.com/",
-                      "Origin": "https://draw.ar-lottery01.com",
-                  }
-              )
-              print(f"API status: {resp.status}")
-              if resp.status != 200:
-                  print(f"Body: {resp.text()[:500]}")
-                  browser.close()
-                  raise SystemExit(1)
-
-              new_data = resp.json()
-              browser.close()
-
-          new_list = new_data.get("data", {}).get("list", [])
-          print(f"New items: {len(new_list)}")
-
-          existing_list = []
-          if os.path.exists("wingo.json"):
-              try:
-                  with open("wingo.json") as f:
-                      existing_list = json.load(f).get("data", {}).get("list", [])
-              except Exception:
-                  pass
-
-          merged = {}
-          for item in existing_list + new_list:
-              issue = item.get("issueNumber")
-              if issue:
-                  merged[issue] = item
-
-          final_list = sorted(
-              merged.values(),
-              key=lambda x: x.get("issueNumber", ""),
-              reverse=True
-          )[:1440]
-
-          with open("wingo.json", "w") as f:
-              json.dump({
-                  "data": {"list": final_list},
-                  "_fetched_at": datetime.now(timezone.utc).isoformat()
-              }, f, indent=2)
-
-          print(f"Saved {len(final_list)} items")
-          EOF
-
-      - name: Commit and push
-        run: |
-          git config user.name "wingo-bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add wingo.json
-          if git diff --staged --quiet; then
-            echo "No changes"
-          else
-            git commit -m "Update wingo data [skip ci]"
-            git push
+          RESPONSE=$(curl -s -o response.json -w "%{http_code}" \
+            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36" \
+            "https://paiwingoongo.byethost24.com/index.php?cron=1&key=${{ secrets.WINGO_CRON_KEY }}")
+          echo "HTTP status: $RESPONSE"
+          echo "---- Response body ----"
+          cat response.json
+          if [ "$RESPONSE" -lt 200 ] || [ "$RESPONSE" -ge 300 ]; then
+            echo "::warning::Cron call returned HTTP $RESPONSE"
           fi
