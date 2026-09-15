@@ -2,23 +2,48 @@ name: WinGo Collector Cron
 
 on:
   schedule:
-    # GitHub Actions' minimum reliable interval is ~5 minutes.
-    # Cron syntax: minute hour day month weekday
     - cron: '*/5 * * * *'
-  workflow_dispatch: {}   # lets you also trigger it manually from the Actions tab
+  workflow_dispatch: {}
 
 jobs:
   ping-collector:
     runs-on: ubuntu-latest
     steps:
-      - name: Call the collector cron endpoint
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}
+
+      - name: Install Playwright
         run: |
-          RESPONSE=$(curl -s -o response.json -w "%{http_code}" \
-            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36" \
-            "https://paiwingoongo.byethost24.com/index.php?cron=1&key=${{ secrets.WINGO_CRON_KEY }}")
-          echo "HTTP status: $RESPONSE"
-          echo "---- Response body ----"
-          cat response.json
-          if [ "$RESPONSE" -lt 200 ] || [ "$RESPONSE" -ge 300 ]; then
-            echo "::warning::Cron call returned HTTP $RESPONSE"
-          fi
+          npm init -y
+          npm install playwright
+
+      - name: Install Chromium (only if not cached)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run cron via real browser
+        env:
+          WINGO_CRON_KEY: ${{ secrets.WINGO_CRON_KEY }}
+        run: |
+          cat > fetch-cron.js << 'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            const url = `https://paiwingoongo.byethost24.com/index.php?cron=1&key=${process.env.WINGO_CRON_KEY}`;
+            await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+            await page.waitForTimeout(3000);
+            console.log('Final URL:', page.url());
+            console.log('Body:', await page.textContent('body'));
+            await browser.close();
+          })();
+          EOF
+          node fetch-cron.js
